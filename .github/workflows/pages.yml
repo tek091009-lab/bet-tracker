@@ -46,21 +46,22 @@ jobs:
           python upgrade.py
           python release_patch.py
           python connections_patch.py
+          python crash_hotfix.py
           python - <<'PY'
           from pathlib import Path
           import hashlib,re
           p=Path('dist/index.html'); b=p.read_bytes(); s=b.decode()
-          assert len(b)==393477
-          assert hashlib.sha256(b).hexdigest()=='b0ee18f785f0fec55731ee3d619ac867c32693655eb282861d4b54ade9b4595c'
+          assert len(b)==393705
+          assert hashlib.sha256(b).hexdigest()=='9e5c9cef73dd61a562d2ad3838646d105be4b9529e50848cbfc3fc8b366b1a4b'
           assert '@users.holidaysavings.app' not in s
           assert 'Existing Bet Tracker Excel' not in s
-          for x in ['bt-online-controller','bt-live-v2-enhancer','Save ladder to history','Your sports & betting apps','bet-tracker-live-v1','is[i]??{accent','bt-import-bets-v1','Paddy Power statement PDF','bookmakerStartingBalances','@users.bettracker.app','bt-bulk-bets-v1','data-bet-id','Delete selected','Select all filtered','Sport and Description are intentionally left blank','bt-connections-card-import-v2','bt-card-import','Import Paddy Power bets','bt-import-modal-backdrop']:
+          for x in ['bt-online-controller','bt-live-v2-enhancer','Save ladder to history','Your sports & betting apps','bet-tracker-live-v1','is[i]??{accent','bt-import-bets-v1','Paddy Power statement PDF','bookmakerStartingBalances','@users.bettracker.app','bt-bulk-bets-v1','data-bet-id','Delete selected','Select all filtered','Sport and Description are intentionally left blank','bt-connections-card-import-v2','bt-card-import','Import Paddy Power bets','bt-import-modal-backdrop','document.querySelector("#bt-import-bets"))return','if(p.parentNode!==document.body)document.body.appendChild(p)','syncQueued=false']:
               assert x in s,x
           for sid in ['bt-online-controller','bt-v1-enhancer-script','bt-live-v2-enhancer','bt-import-bets-v1','bt-bulk-bets-v1','bt-connections-card-import-v2']:
               m=re.search(r'<script[^>]*id="'+re.escape(sid)+r'"[^>]*>(.*?)</script>',s,re.S)
               assert m,sid
               Path('/tmp/'+sid+'.js').write_text(m.group(1))
-          print('Verified bookmaker-card import release:',len(b),'bytes',hashlib.sha256(b).hexdigest())
+          print('Verified navigation crash hotfix:',len(b),'bytes',hashlib.sha256(b).hexdigest())
           PY
           node --check /tmp/bt-online-controller.js
           node --check /tmp/bt-v1-enhancer-script.js
@@ -79,4 +80,4 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-# release: bookmaker-card-import-v2
+# release: navigation-crash-hotfix-v1
