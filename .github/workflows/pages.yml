@@ -51,25 +51,28 @@ jobs:
           python stability_patch.py
           python auth_isolation_patch.py
           python bet365_patch.py
+          python import_ui_v2.py
           python - <<'PY'
           from pathlib import Path
           import hashlib,re
           p=Path('dist/index.html'); b=p.read_bytes(); s=b.decode()
-          assert len(b)==408740
-          assert hashlib.sha256(b).hexdigest()=='8c7cdea779f910c19aa0596d617a0bb89a388c3c01240e68f0a9438279f2f380'
+          assert len(b)==411851
+          assert hashlib.sha256(b).hexdigest()=='b94e26655862dcff1c83cfe4e8c1725167972ebc2a99fd6d98b7a3f436b9c073'
           assert '@users.holidaysavings.app' not in s
           assert 'Existing Bet Tracker Excel' not in s
           assert 'bt-bulk-bets-v1' not in s
           assert 'data-bet-id' not in s
           assert 'sessionStorage.clear()' not in s
           assert 'AUTH_NAMESPACE="bettracker-auth:"' in s
-          for x in ['bt-online-controller','bt-live-v2-enhancer','bt-import-bets-v1','bt-connections-card-import-v2','bt-bet365-import-v1','"Bet365":{live:true','Read Bet365 statement','pdfjs-dist@5.7.284','tesseract.js@5']:
+          for x in ['bt-online-controller','bt-live-v2-enhancer','bt-import-bets-v1','bt-connections-card-import-v2','bt-bet365-import-v1','window.bt365OpenDedicated','id="bt365-dedicated-import"','BET365 HISTORY','Bet365 Statement of All Transactions PDF','if(bookmaker==="Bet365"){window.bt365OpenDedicated?.();return}','Read Bet365 statement','pdfjs-dist@5.7.284','tesseract.js@5']:
               assert x in s,x
+          ded=s[s.index('window.bt365OpenDedicated'):s.index('window.bt365RestorePaddy')]
+          assert 'bt-import-bookmaker' not in ded
           for sid in ['bt-online-controller','bt-v1-enhancer-script','bt-live-v2-enhancer','bt-import-bets-v1','bt-connections-card-import-v2','bt-bet365-import-v1']:
               m=re.search(r'<script[^>]*id="'+re.escape(sid)+r'"[^>]*>(.*?)</script>',s,re.S)
               assert m,sid
               Path('/tmp/'+sid+'.js').write_text(m.group(1))
-          print('Verified Bet365 import release:',len(b),'bytes',hashlib.sha256(b).hexdigest())
+          print('Verified dedicated Bet365 importer:',len(b),'bytes',hashlib.sha256(b).hexdigest())
           PY
           node --check /tmp/bt-online-controller.js
           node --check /tmp/bt-v1-enhancer-script.js
@@ -88,4 +91,4 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-# release: bet365-statement-import-v1
+# release: dedicated-bet365-import-ui-v2
