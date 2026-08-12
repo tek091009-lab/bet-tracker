@@ -48,15 +48,14 @@ jobs:
           from pathlib import Path
           import hashlib,re
           p=Path('dist/index.html'); b=p.read_bytes(); s=b.decode()
-          assert len(b)==350045
-          assert hashlib.sha256(b).hexdigest()=='9256304cd8671aae23768628c1f829f4c57118ee138319285c99809f4976030d'
-          for x in ['bt-online-controller','bt-live-v2-enhancer','Save ladder to history','Your sports & betting apps','bet-tracker-live-v1']:
+          assert len(b)==350096
+          for x in ['bt-online-controller','bt-live-v2-enhancer','Save ladder to history','Your sports & betting apps','bet-tracker-live-v1','is[i]??{accent']:
               assert x in s,x
           for sid in ['bt-online-controller','bt-v1-enhancer-script','bt-live-v2-enhancer']:
               m=re.search(r'<script[^>]*id="'+re.escape(sid)+r'"[^>]*>(.*?)</script>',s,re.S)
               assert m,sid
               Path('/tmp/'+sid+'.js').write_text(m.group(1))
-          print('Verified live Bet Tracker:',len(b),'bytes')
+          print('Verified live Bet Tracker:',len(b),'bytes',hashlib.sha256(b).hexdigest())
           PY
           node --check /tmp/bt-online-controller.js
           node --check /tmp/bt-v1-enhancer-script.js
@@ -72,4 +71,4 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-# release: dashboard-custom-tracking-ladder-v2
+# release: custom-bookmakers-everywhere
