@@ -24,46 +24,48 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build Bet Tracker website
+      - name: Build and verify live Bet Tracker
         shell: bash
         run: |
-          rm -rf dist
-          mkdir -p dist
+          rm -rf dist && mkdir -p dist
           python - <<'PY'
           from pathlib import Path
           import hashlib
-
-          src = ''.join(Path('app.b64').read_text().split())
-          fix = ''.join(Path(f'fix05/p{i}.b64').read_text() for i in range(6))
-          assert len(src) == 121204, len(src)
-          assert len(fix) == 12000, len(fix)
-
-          good = src[:97000] + fix + src[109000:]
-          expected = '34eb75c33807001ef90e9a83c26b35239044f4117287d30cc91fc0a13e9771c9'
-          actual = hashlib.sha256(good.encode()).hexdigest()
-          assert actual == expected, (actual, expected)
-          Path('dist/app-good.b64').write_text(good)
-          print('Verified app bundle SHA-256:', actual)
+          src=''.join(Path('app.b64').read_text().split())
+          fix=''.join(Path(f'fix05/p{i}.b64').read_text() for i in range(6))
+          assert len(src)==121204 and len(fix)==12000
+          good=src[:97000]+fix+src[109000:]
+          assert hashlib.sha256(good.encode()).hexdigest()=='34eb75c33807001ef90e9a83c26b35239044f4117287d30cc91fc0a13e9771c9'
+          Path('/tmp/base.b64').write_text(good)
           PY
-
-          base64 --decode dist/app-good.b64 | gzip -dc > dist/index.html
-          rm dist/app-good.b64
-          test -s dist/index.html
-          test "$(wc -c < dist/index.html)" -eq 315483
-          grep -q "Bet Tracker" dist/index.html
-          grep -q "bt-online-controller" dist/index.html
-          grep -q "bet-tracker-auth" dist/index.html
-          grep -q "Delete account" dist/index.html
-          echo "Built verified Bet Tracker: $(wc -c < dist/index.html) bytes"
+          base64 --decode /tmp/base.b64 | gzip -dc > dist/index.html
+          cat upgrade/extra-*.b64 > /tmp/extra.b64
+          base64 --decode /tmp/extra.b64 | gzip -dc > /tmp/bt-extra.html
+          python upgrade.py
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib,re
+          p=Path('dist/index.html'); b=p.read_bytes(); s=b.decode()
+          assert len(b)==350045
+          assert hashlib.sha256(b).hexdigest()=='9256304cd8671aae23768628c1f829f4c57118ee138319285c99809f4976030d'
+          for x in ['bt-online-controller','bt-live-v2-enhancer','Save ladder to history','Your sports & betting apps','bet-tracker-live-v1']:
+              assert x in s,x
+          for sid in ['bt-online-controller','bt-v1-enhancer-script','bt-live-v2-enhancer']:
+              m=re.search(r'<script[^>]*id="'+re.escape(sid)+r'"[^>]*>(.*?)</script>',s,re.S)
+              assert m,sid
+              Path('/tmp/'+sid+'.js').write_text(m.group(1))
+          print('Verified live Bet Tracker:',len(b),'bytes')
+          PY
+          node --check /tmp/bt-online-controller.js
+          node --check /tmp/bt-v1-enhancer-script.js
+          node --check /tmp/bt-live-v2-enhancer.js
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
-
       - name: Upload site
         uses: actions/upload-pages-artifact@v3
         with:
           path: dist
-
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
