@@ -40,7 +40,9 @@ jobs:
           PY
           base64 --decode /tmp/base.b64 | gzip -dc > dist/index.html
           cat upgrade/extra-*.b64 > /tmp/extra.b64
-          base64 --decode /tmp/extra.b64 | gzip -dc > /tmp/bt-extra.html
+          base64 --decode /tmp/extra.b64 | gzip -dc > /tmp/bt-extra-body.html
+          printf '\n' > /tmp/bt-extra.html
+          cat /tmp/bt-extra-body.html >> /tmp/bt-extra.html
           python upgrade.py
           python - <<'PY'
           from pathlib import Path
