@@ -24,11 +24,14 @@ new='var _l=(()=>{let t=["Bet365","Paddy Power","William Hill","Betfred","Ladbro
 assert old in s;s=s.replace(old,new,1)
 old='f=is[u];return(0,c.jsxs)("article",{className:"bank-card"'
 assert old in s;s=s.replace(old,'f=is[u]??{accent:"#2e67f0",secondary:"#0d2945",text:"#fff"};return(0,c.jsxs)("article",{className:"bank-card"',1)
+old='style:{background:is[i].accent,color:is[i].text??"#fff"}'
+new='style:{background:(is[i]??{accent:"#2e67f0",text:"#fff"}).accent,color:(is[i]??{text:"#fff"}).text??"#fff"}'
+assert old in s;s=s.replace(old,new,1)
 old='    "Sky Bet": "skybet.com"\n  };'
 assert old in s;s=s.replace(old,'    "Sky Bet": "skybet.com",\n    ...((()=>{try{return JSON.parse(localStorage.getItem("bet-tracker-prototype-v1")||"{}").customAppDomains||{}}catch{return{}}})())\n  };',1)
 extra=Path("/tmp/bt-extra.html").read_text()
 s=s.replace("</body>",extra+"\n</body>",1)
 s=s.replace("bet-tracker-prototype-v1","bet-tracker-live-v1")
 p.write_text(s)
-assert len(s.encode())==350045,len(s.encode())
+assert len(s.encode())==350096,len(s.encode())
 assert "bt-live-v2-enhancer" in s and "Save ladder to history" in s and "Your sports & betting apps" in s
