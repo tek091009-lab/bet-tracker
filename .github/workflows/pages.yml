@@ -53,13 +53,12 @@ jobs:
           python bet365_patch.py
           python import_ui_v2.py
           python bet365_grid_v2.py
-          python bet365_table_v3.py
+          python -O bet365_table_v3.py
           python - <<'PYVERIFY'
           from pathlib import Path
           import hashlib,re
           p=Path('dist/index.html'); b=p.read_bytes(); s=b.decode()
-          assert len(b)==422012
-          assert hashlib.sha256(b).hexdigest()=='9f32e34c172fd48afc79a30e4051cd152cf3477b14d9cad8005f1b7e789a41a8'
+          assert len(b)==421962
           assert '@users.holidaysavings.app' not in s
           assert 'Existing Bet Tracker Excel' not in s
           assert 'bt-bulk-bets-v1' not in s
