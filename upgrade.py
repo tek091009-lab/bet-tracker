@@ -1,4 +1,5 @@
 from pathlib import Path
+import base64,gzip,hashlib
 p=Path("dist/index.html")
 s=p.read_text()
 R={
@@ -32,6 +33,23 @@ assert old in s;s=s.replace(old,'    "Sky Bet": "skybet.com",\n    ...((()=>{try
 extra=Path("/tmp/bt-extra.html").read_text()
 s=s.replace("</body>",extra+"\n</body>",1)
 s=s.replace("bet-tracker-prototype-v1","bet-tracker-live-v1")
+
+# Import-aware account state: exact imported returns/P&L and per-bookmaker opening balances.
+assert s.count('version:1,startingBalance:0,transactions:[],bets:[]') == 2
+s=s.replace('version:1,startingBalance:0,transactions:[],bets:[]','version:1,startingBalance:0,bookmakerStartingBalances:{},transactions:[],bets:[]')
+old='ts=t=>!t.odds||!t.stake?0:fi(t)?t.odds*t.stake-t.stake:t.odds*t.stake,Pt=t=>t.result==="Pending"?null:t.result==="Void"?0:t.result==="Cash Out"?t.cashoutProfit??0:t.result==="Loss"?fi(t)?0:-t.stake:t.result==="Win"?fi(t)?ts(t):ts(t)-t.stake:null,_n=t=>fi(t)?0:t.stake,as=t=>[...t].sort((l,a)=>l.date.localeCompare(a.date)||l.createdAt-a.createdAt),lm=t=>{let l=as(t.bets),a=0,e=0;return l.map(n=>{let u=t.transactions.filter(b=>b.date<=n.date).reduce((b,h)=>b+(h.type==="deposit"?h.amount:-h.amount),0),i=t.startingBalance+u+a-e,f=Pt(n),s=_n(n),m=s>0&&i>0?s/i:0;return f===null?e+=s:a+=f,{...n,potentialReturns:ts(n),profitLoss:f,bankrollRisk:m,balanceAfter:t.startingBalance+u+a-e}})},oi=t=>{let l=t.transactions.reduce((e,n)=>e+(n.type==="deposit"?n.amount:-n.amount),0),a=t.bets.reduce((e,n)=>e+(Pt(n)??-_n(n)),0);return t.startingBalance+l+a},es=(t,l)=>{let a=t.transactions.filter(u=>u.app===l&&u.type==="deposit").reduce((u,i)=>u+i.amount,0),e=t.transactions.filter(u=>u.app===l&&u.type==="withdrawal").reduce((u,i)=>u+i.amount,0),n=t.bets.filter(u=>u.app===l).reduce((u,i)=>u+(Pt(i)??-_n(i)),0);return{balance:a-e+n,deposits:a,withdrawals:e,netDW:e-a}}'
+new='ts=t=>Number.isFinite(t.importedPotentialReturns)?t.importedPotentialReturns:!t.odds||!t.stake?0:fi(t)?t.odds*t.stake-t.stake:t.odds*t.stake,Pt=t=>Number.isFinite(t.manualProfitLoss)?t.manualProfitLoss:t.result==="Pending"?null:t.result==="Void"?0:t.result==="Cash Out"?t.cashoutProfit??0:t.result==="Loss"?fi(t)?0:-t.stake:t.result==="Win"?fi(t)?ts(t):ts(t)-t.stake:null,_n=t=>fi(t)?0:t.stake,as=t=>[...t].sort((l,a)=>l.date.localeCompare(a.date)||l.createdAt-a.createdAt),lm=t=>{let l=as(t.bets),a=0,e=0;return l.map(n=>{let u=t.transactions.filter(b=>b.date<=n.date).reduce((b,h)=>b+(h.type==="deposit"?h.amount:-h.amount),0),o=Object.values(t.bookmakerStartingBalances||{}).reduce((b,h)=>{let d=typeof h==="object"&&h?h.date:null,p=typeof h==="number"?h:Number(h?.amount)||0;return b+(!d||d<=n.date?p:0)},0),i=t.startingBalance+o+u+a-e,f=Pt(n),s=_n(n),m=s>0&&i>0?s/i:0;return f===null?e+=s:a+=f,{...n,potentialReturns:ts(n),profitLoss:f,bankrollRisk:m,balanceAfter:t.startingBalance+o+u+a-e}})},oi=t=>{let l=t.transactions.reduce((e,n)=>e+(n.type==="deposit"?n.amount:-n.amount),0),a=t.bets.reduce((e,n)=>e+(Pt(n)??-_n(n)),0),o=Object.values(t.bookmakerStartingBalances||{}).reduce((e,n)=>e+(typeof n==="number"?n:Number(n?.amount)||0),0);return t.startingBalance+o+l+a},es=(t,l)=>{let a=t.transactions.filter(u=>u.app===l&&u.type==="deposit").reduce((u,i)=>u+i.amount,0),e=t.transactions.filter(u=>u.app===l&&u.type==="withdrawal").reduce((u,i)=>u+i.amount,0),n=t.bets.filter(u=>u.app===l).reduce((u,i)=>u+(Pt(i)??-_n(i)),0),o=t.bookmakerStartingBalances?.[l],r=typeof o==="number"?o:Number(o?.amount)||0;return{balance:r+a-e+n,startingBalance:r,deposits:a,withdrawals:e,netDW:e-a}}'
+assert s.count(old)==1
+s=s.replace(old,new,1)
+
+# Self-service Connections importer. The uploaded files are parsed in the browser; only imported tracker data is persisted.
+import_js=gzip.decompress(base64.b64decode(''.join(Path('import/import-v1.b64').read_text().split()))).decode()
+assert hashlib.sha256(import_js.encode()).hexdigest()=='cc091bd4ea3c901c6adb83d5b1bc16514c5d43e41dfdf0d08dad6d08ddfc62c5'
+s=s.replace('</body>',f'<script id="bt-import-bets-v1">\n{import_js}\n</script>\n</body>',1)
+
 p.write_text(s)
-assert len(s.encode())==350096,len(s.encode())
-assert "bt-live-v2-enhancer" in s and "Save ladder to history" in s and "Your sports & betting apps" in s
+b=s.encode()
+assert len(b)==375553,len(b)
+assert hashlib.sha256(b).hexdigest()=='ff3d4675f69201265eaccb0d7d64ecde844f06116573c94b3580ac60c9bd29fe'
+for marker in ['bt-live-v2-enhancer','Save ladder to history','Your sports & betting apps','bt-import-bets-v1','Paddy Power statement PDF','bookmakerStartingBalances']:
+    assert marker in s,marker
