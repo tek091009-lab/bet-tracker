@@ -45,27 +45,29 @@ jobs:
           cat /tmp/bt-extra-body.html >> /tmp/bt-extra.html
           python upgrade.py
           python release_patch.py
+          python connections_patch.py
           python - <<'PY'
           from pathlib import Path
           import hashlib,re
           p=Path('dist/index.html'); b=p.read_bytes(); s=b.decode()
-          assert len(b)==385806
-          assert hashlib.sha256(b).hexdigest()=='7c8723e6c8f4e9a1028c0672c45c6aab29513c89cac9c5eea133c9e44426a169'
+          assert len(b)==390403
+          assert hashlib.sha256(b).hexdigest()=='7cb8a414978f990298d03741dd0c16c5c412c638b196d213ba01d6ad6eebbd24'
           assert '@users.holidaysavings.app' not in s
           assert 'Existing Bet Tracker Excel' not in s
-          for x in ['bt-online-controller','bt-live-v2-enhancer','Save ladder to history','Your sports & betting apps','bet-tracker-live-v1','is[i]??{accent','bt-import-bets-v1','Paddy Power statement PDF','bookmakerStartingBalances','@users.bettracker.app','bt-bulk-bets-v1','data-bet-id','Delete selected','Select all filtered','Sport and Description are intentionally left blank']:
+          for x in ['bt-online-controller','bt-live-v2-enhancer','Save ladder to history','Your sports & betting apps','bet-tracker-live-v1','is[i]??{accent','bt-import-bets-v1','Paddy Power statement PDF','bookmakerStartingBalances','@users.bettracker.app','bt-bulk-bets-v1','data-bet-id','Delete selected','Select all filtered','Sport and Description are intentionally left blank','bt-connections-import-nav-v1','Statement import available','Reader being added']:
               assert x in s,x
-          for sid in ['bt-online-controller','bt-v1-enhancer-script','bt-live-v2-enhancer','bt-import-bets-v1','bt-bulk-bets-v1']:
+          for sid in ['bt-online-controller','bt-v1-enhancer-script','bt-live-v2-enhancer','bt-import-bets-v1','bt-bulk-bets-v1','bt-connections-import-nav-v1']:
               m=re.search(r'<script[^>]*id="'+re.escape(sid)+r'"[^>]*>(.*?)</script>',s,re.S)
               assert m,sid
               Path('/tmp/'+sid+'.js').write_text(m.group(1))
-          print('Verified Bet Tracker bulk edit release:',len(b),'bytes',hashlib.sha256(b).hexdigest())
+          print('Verified Connections-only import release:',len(b),'bytes',hashlib.sha256(b).hexdigest())
           PY
           node --check /tmp/bt-online-controller.js
           node --check /tmp/bt-v1-enhancer-script.js
           node --check /tmp/bt-live-v2-enhancer.js
           node --check /tmp/bt-import-bets-v1.js
           node --check /tmp/bt-bulk-bets-v1.js
+          node --check /tmp/bt-connections-import-nav-v1.js
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
@@ -77,4 +79,4 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-# release: paddy-statement-general-bulk-edit-v1
+# release: connections-only-import-v1
