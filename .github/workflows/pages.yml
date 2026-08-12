@@ -50,31 +50,33 @@ jobs:
           python bettracker_hotfix.py
           python stability_patch.py
           python auth_isolation_patch.py
+          python bet365_patch.py
           python - <<'PY'
           from pathlib import Path
           import hashlib,re
           p=Path('dist/index.html'); b=p.read_bytes(); s=b.decode()
-          assert len(b)==383642
-          assert hashlib.sha256(b).hexdigest()=='dd8769c4549114c889767b1dd58f30fe709c633b16c876ea7d8154345bdf01bc'
+          assert len(b)==408740
+          assert hashlib.sha256(b).hexdigest()=='8c7cdea779f910c19aa0596d617a0bb89a388c3c01240e68f0a9438279f2f380'
           assert '@users.holidaysavings.app' not in s
           assert 'Existing Bet Tracker Excel' not in s
           assert 'bt-bulk-bets-v1' not in s
           assert 'data-bet-id' not in s
           assert 'sessionStorage.clear()' not in s
           assert 'AUTH_NAMESPACE="bettracker-auth:"' in s
-          for x in ['bt-online-controller','bt-live-v2-enhancer','Save ladder to history','Your sports & betting apps','bet-tracker-live-v1','bt-import-bets-v1','Paddy Power statement PDF','bookmakerStartingBalances','@users.bettracker.app','Sport and Description are intentionally left blank','bt-connections-card-import-v2','bt-card-import','Import Paddy Power bets','bt-import-modal-backdrop']:
+          for x in ['bt-online-controller','bt-live-v2-enhancer','bt-import-bets-v1','bt-connections-card-import-v2','bt-bet365-import-v1','"Bet365":{live:true','Read Bet365 statement','pdfjs-dist@5.7.284','tesseract.js@5']:
               assert x in s,x
-          for sid in ['bt-online-controller','bt-v1-enhancer-script','bt-live-v2-enhancer','bt-import-bets-v1','bt-connections-card-import-v2']:
+          for sid in ['bt-online-controller','bt-v1-enhancer-script','bt-live-v2-enhancer','bt-import-bets-v1','bt-connections-card-import-v2','bt-bet365-import-v1']:
               m=re.search(r'<script[^>]*id="'+re.escape(sid)+r'"[^>]*>(.*?)</script>',s,re.S)
               assert m,sid
               Path('/tmp/'+sid+'.js').write_text(m.group(1))
-          print('Verified isolated Bet Tracker auth:',len(b),'bytes',hashlib.sha256(b).hexdigest())
+          print('Verified Bet365 import release:',len(b),'bytes',hashlib.sha256(b).hexdigest())
           PY
           node --check /tmp/bt-online-controller.js
           node --check /tmp/bt-v1-enhancer-script.js
           node --check /tmp/bt-live-v2-enhancer.js
           node --check /tmp/bt-import-bets-v1.js
           node --check /tmp/bt-connections-card-import-v2.js
+          node --check /tmp/bt-bet365-import-v1.js
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
@@ -86,4 +88,4 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-# release: separate-auth-storage-v1
+# release: bet365-statement-import-v1
