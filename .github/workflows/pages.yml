@@ -29,12 +29,32 @@ jobs:
         run: |
           rm -rf dist
           mkdir -p dist
-          tr -d '\r\n\t ' < app.b64 | base64 --decode | gzip -dc > dist/index.html
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib
+
+          src = ''.join(Path('app.b64').read_text().split())
+          fix = ''.join(Path(f'fix05/p{i}.b64').read_text() for i in range(6))
+          assert len(src) == 121204, len(src)
+          assert len(fix) == 12000, len(fix)
+
+          good = src[:97000] + fix + src[109000:]
+          expected = '34eb75c33807001ef90e9a83c26b35239044f4117287d30cc91fc0a13e9771c9'
+          actual = hashlib.sha256(good.encode()).hexdigest()
+          assert actual == expected, (actual, expected)
+          Path('dist/app-good.b64').write_text(good)
+          print('Verified app bundle SHA-256:', actual)
+          PY
+
+          base64 --decode dist/app-good.b64 | gzip -dc > dist/index.html
+          rm dist/app-good.b64
           test -s dist/index.html
+          test "$(wc -c < dist/index.html)" -eq 315483
           grep -q "Bet Tracker" dist/index.html
           grep -q "bt-online-controller" dist/index.html
           grep -q "bet-tracker-auth" dist/index.html
-          echo "Built Bet Tracker: $(wc -c < dist/index.html) bytes"
+          grep -q "Delete account" dist/index.html
+          echo "Built verified Bet Tracker: $(wc -c < dist/index.html) bytes"
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
