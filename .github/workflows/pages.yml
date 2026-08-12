@@ -47,21 +47,24 @@ jobs:
           python release_patch.py
           python connections_patch.py
           python crash_hotfix.py
+          python bettracker_hotfix.py
           python - <<'PY'
           from pathlib import Path
           import hashlib,re
           p=Path('dist/index.html'); b=p.read_bytes(); s=b.decode()
-          assert len(b)==393705
-          assert hashlib.sha256(b).hexdigest()=='9e5c9cef73dd61a562d2ad3838646d105be4b9529e50848cbfc3fc8b366b1a4b'
+          assert len(b)==393221
+          assert hashlib.sha256(b).hexdigest()=='d980668a46c6deb42b451d6b231e56aae89e0c527de9f32178ce6b9ad98d04fd'
           assert '@users.holidaysavings.app' not in s
           assert 'Existing Bet Tracker Excel' not in s
-          for x in ['bt-online-controller','bt-live-v2-enhancer','Save ladder to history','Your sports & betting apps','bet-tracker-live-v1','is[i]??{accent','bt-import-bets-v1','Paddy Power statement PDF','bookmakerStartingBalances','@users.bettracker.app','bt-bulk-bets-v1','data-bet-id','Delete selected','Select all filtered','Sport and Description are intentionally left blank','bt-connections-card-import-v2','bt-card-import','Import Paddy Power bets','bt-import-modal-backdrop','document.querySelector("#bt-import-bets"))return','if(p.parentNode!==document.body)document.body.appendChild(p)','syncQueued=false']:
+          assert 'tr.insertBefore(td,tr.firstChild)' not in s
+          assert 'head.insertBefore(th,head.firstChild)' not in s
+          for x in ['bt-online-controller','bt-live-v2-enhancer','Save ladder to history','Your sports & betting apps','bet-tracker-live-v1','is[i]??{accent','bt-import-bets-v1','Paddy Power statement PDF','bookmakerStartingBalances','@users.bettracker.app','bt-bulk-bets-v1','data-bet-id','Delete selected','Select all filtered','Sport and Description are intentionally left blank','bt-connections-card-import-v2','bt-card-import','Import Paddy Power bets','bt-import-modal-backdrop','document.querySelector("#bt-import-bets"))return','if(p.parentNode!==document.body)document.body.appendChild(p)','syncQueued=false','bulkInstallQueued=false']:
               assert x in s,x
           for sid in ['bt-online-controller','bt-v1-enhancer-script','bt-live-v2-enhancer','bt-import-bets-v1','bt-bulk-bets-v1','bt-connections-card-import-v2']:
               m=re.search(r'<script[^>]*id="'+re.escape(sid)+r'"[^>]*>(.*?)</script>',s,re.S)
               assert m,sid
               Path('/tmp/'+sid+'.js').write_text(m.group(1))
-          print('Verified navigation crash hotfix:',len(b),'bytes',hashlib.sha256(b).hexdigest())
+          print('Verified Bet Tracker table crash hotfix:',len(b),'bytes',hashlib.sha256(b).hexdigest())
           PY
           node --check /tmp/bt-online-controller.js
           node --check /tmp/bt-v1-enhancer-script.js
@@ -80,4 +83,4 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-# release: navigation-crash-hotfix-v1
+# release: bet-tracker-table-crash-hotfix-v1
