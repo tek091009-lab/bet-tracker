@@ -44,13 +44,14 @@ jobs:
           printf '\n' > /tmp/bt-extra.html
           cat /tmp/bt-extra-body.html >> /tmp/bt-extra.html
           python upgrade.py
+          python loginfix.py
           python - <<'PY'
           from pathlib import Path
           import hashlib,re
           p=Path('dist/index.html'); b=p.read_bytes(); s=b.decode()
-          assert len(b)==375553
-          assert hashlib.sha256(b).hexdigest()=='ff3d4675f69201265eaccb0d7d64ecde844f06116573c94b3580ac60c9bd29fe'
-          for x in ['bt-online-controller','bt-live-v2-enhancer','Save ladder to history','Your sports & betting apps','bet-tracker-live-v1','is[i]??{accent','bt-import-bets-v1','Paddy Power statement PDF','Existing Bet Tracker Excel','bookmakerStartingBalances']:
+          assert len(b)==375678
+          assert hashlib.sha256(b).hexdigest()=='fc5b49d13be856add043ebd552d106c7d8da158c8320435ed6e74cfaa8cfb363'
+          for x in ['bt-online-controller','bt-live-v2-enhancer','Save ladder to history','Your sports & betting apps','bet-tracker-live-v1','is[i]??{accent','bt-import-bets-v1','Paddy Power statement PDF','Existing Bet Tracker Excel','bookmakerStartingBalances','@users.holidaysavings.app']:
               assert x in s,x
           for sid in ['bt-online-controller','bt-v1-enhancer-script','bt-live-v2-enhancer','bt-import-bets-v1']:
               m=re.search(r'<script[^>]*id="'+re.escape(sid)+r'"[^>]*>(.*?)</script>',s,re.S)
@@ -73,4 +74,4 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-# release: paddy-power-import-v1
+# release: paddy-power-import-v1-loginfix
