@@ -56,12 +56,13 @@ jobs:
           python -O bet365_table_v3.py
           python bet365_layout_fix.py
           python event_time_patch.py
+          python bookmaker_running_balance_patch.py
           python - <<'PYVERIFY'
           from pathlib import Path
           import hashlib,re
           p=Path('dist/index.html'); b=p.read_bytes(); s=b.decode()
-          assert len(b)==423651
-          assert hashlib.sha256(b).hexdigest()=='5f01ae48883f7add774bb5b0ccc2fec9962217312af631c7e2ff6449acad2013'
+          assert len(b)==423725
+          assert hashlib.sha256(b).hexdigest()=='cb2ef414ab60c37f09d48ca790e56d0aa2763225b561efae6666487371092ada'
           assert '@users.holidaysavings.app' not in s
           assert 'Existing Bet Tracker Excel' not in s
           assert 'bt-bulk-bets-v1' not in s
@@ -71,7 +72,7 @@ jobs:
           assert 'bt-bet365-import-v1' not in s
           assert 'bt-bet365-import-v2' not in s
           assert 't.transactions.filter(b=>b.date<=n.date)' not in s
-          for x in ['bt-online-controller','bt-live-v2-enhancer','bt-import-bets-v1','bt-connections-card-import-v2','bt-bet365-import-v3','window.bt365OpenDedicated','id="bt365-dedicated-import"','BET365 HISTORY','Bet365 Statement of All Transactions PDF','if(bookmaker==="Bet365"){window.bt365OpenDedicated?.();return}','Convert PDF to table','pdfjs-dist@5.7.284','tesseract.js@5','GRID_RATIOS','detectTableGrid','ocrGridPage','PDF → table conversion','View converted table','BET365_TABLE_IMPORT_VERSION="v3-pdf-to-table"','bettracker-import-cache-v1','bt365-viewport-layout-fix-v1','position:sticky;bottom:0;z-index:25','bt-event-time-v1','Number(b.createdAt)','Number(n.createdAt)']:
+          for x in ['bt-online-controller','bt-live-v2-enhancer','bt-import-bets-v1','bt-connections-card-import-v2','bt-bet365-import-v3','window.bt365OpenDedicated','id="bt365-dedicated-import"','BET365 HISTORY','Bet365 Statement of All Transactions PDF','if(bookmaker==="Bet365"){window.bt365OpenDedicated?.();return}','Convert PDF to table','pdfjs-dist@5.7.284','tesseract.js@5','GRID_RATIOS','detectTableGrid','ocrGridPage','PDF → table conversion','View converted table','BET365_TABLE_IMPORT_VERSION="v3-pdf-to-table"','bettracker-import-cache-v1','bt365-viewport-layout-fix-v1','position:sticky;bottom:0;z-index:25','bt-event-time-v1','bt-bookmaker-running-balance-v1','b.app===r','t.bookmakerStartingBalances?.[r]']:
               assert x in s,x
           ded=s[s.index('window.bt365OpenDedicated'):s.index('window.bt365RestorePaddy')]
           assert 'bt-import-bookmaker' not in ded
@@ -79,7 +80,7 @@ jobs:
               m=re.search(r'<script[^>]*id="'+re.escape(sid)+r'"[^>]*>(.*?)</script>',s,re.S)
               assert m,sid
               Path('/tmp/'+sid+'.js').write_text(m.group(1))
-          print('Verified exact transaction-time bankroll build:',len(b),'bytes',hashlib.sha256(b).hexdigest())
+          print('Verified bookmaker-specific timed balance build:',len(b),'bytes',hashlib.sha256(b).hexdigest())
           PYVERIFY
           node --check /tmp/bt-online-controller.js
           node --check /tmp/bt-v1-enhancer-script.js
@@ -98,4 +99,4 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-# release: exact-transaction-time-v1
+# release: bookmaker-specific-timed-balances-v1
